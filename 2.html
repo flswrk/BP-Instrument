@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blood Pressure Instrument — Flosswork Chairside Reference</title>
+<style>
+:root{
+  /* instrument panel */
+  --ink:#11151A; --panel:#181D24; --panel-2:#1F252D; --line-dark:#2C333D;
+  /* paper content */
+  --paper:#F6F4EE; --card:#FFFFFF; --line-light:#E1DCCC; --ink-on-paper:#1A1C1F; --muted:#736D5E;
+  /* info (kept separate from risk ramp) */
+  --info:#176E78; --info-bg:#E4F1F1;
+  /* risk ramp — vivid "fill" tokens for the gauge bar (decorative, not text) */
+  --safe:#2E9E5B; --safe-bg:#E3F5E9;
+  --caution:#B0810A; --caution-bg:#FBF1D2;
+  --postpone:#C26A1E; --postpone-bg:#FBE6D2;
+  --defer:#C93B4B; --defer-bg:#FBE2E5;
+  /* risk ramp — "ink" tokens for text/borders, darkened to pass WCAG AA (4.5:1) on their *-bg */
+  --safe-ink:#247A47; --caution-ink:#896508; --postpone-ink:#9A5418; --defer-ink:#BC3443;
+  --purple:#6B4499; --purple-bg:#F0E7F8;
+  /* instrument accent */
+  --lcd-glow: 0 0 18px currentColor;
+  --tap-min:44px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--paper);color:var(--ink-on-paper);
+  font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+  overflow-x:hidden; width:100%;}
+::selection{background:#FFE9A8;}
+.mono{font-family:ui-monospace,"SF Mono","Cascadia Mono","Roboto Mono","Consolas",monospace;}
+
+.grid-2 > *, .grid-3 > *, .grid-4 > *, .instrument > *{min-width:0;}
+img,table{max-width:100%;}
+
+a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-visible{
+  outline:2.5px solid var(--info); outline-offset:2px;
+}
+
+/* ===== Top bar ===== */
+.topbar{display:flex;align-items:center;justify-content:space-between;
+  padding:10px 22px;background:var(--ink);color:#EDEAE0;border-bottom:1px solid #000;}
+.topbar .brand{display:flex;align-items:center;gap:10px;}
+.topbar .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--safe);box-shadow:var(--lcd-glow);color:var(--safe);}
+.topbar .brand b{font-size:14.5px;letter-spacing:.2px;}
+.topbar .brand span{font-size:11px;color:#9B9586;}
+.topbar .meta{font-size:10.5px;color:#9B9586;text-align:right;line-height:1.4;}
+@media (max-width:620px){
+  .topbar{flex-direction:column;align-items:flex-start;gap:4px;}
+  .topbar .meta{text-align:left;}
+  .bp-input{font-size:36px !important;width:105px !important;}
+  .instrument{gap:14px;}
+}
+
+/* ===== Hero instrument ===== */
+.hero{background:linear-gradient(180deg,var(--ink),var(--panel));padding:26px 22px 22px;color:#EDEAE0;}
+.hero-inner{max-width:1180px;margin:0 auto;}
+.hero-label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#9B9586;margin-bottom:10px;}
+.instrument{display:grid;grid-template-columns:1.1fr 1.4fr;gap:24px;align-items:stretch;}
+@media (max-width:920px){.instrument{grid-template-columns:1fr;}}
+
+.readout-card{background:var(--panel-2);border:1px solid var(--line-dark);border-radius:10px;padding:18px 20px;}
+.reading-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#9B9586;margin-bottom:10px;}
+.input-row{display:flex;align-items:baseline;gap:8px;margin-bottom:6px;}
+.bp-input{font-family:ui-monospace,"SF Mono","Roboto Mono",monospace;font-size:50px;font-weight:700;
+  background:transparent;border:none;color:#F4F1E8;width:130px;letter-spacing:-1px;padding:0;}
+.bp-input:focus{outline:none;}
+.bp-slash{font-size:36px;color:#9B9586;font-weight:300;}
+.input-unit-label{font-size:15px;color:#9B9586;font-weight:600;align-self:center;}
+input[type="range"].bp-slider{width:100%;margin:6px 0 4px;accent-color:#F4F1E8;}
+.slider-hint{font-size:10px;color:#786; color:#8A8577;margin:0 0 12px;}
+.toggle-row{display:flex;gap:14px;font-size:12.5px;color:#C9C5B8;margin-bottom:4px;flex-wrap:wrap;}
+.toggle-row label{display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;
+  padding:8px 4px;min-height:var(--tap-min);}
+.toggle-row input{accent-color:var(--defer);width:19px;height:19px;flex-shrink:0;}
+.slider-block{margin-bottom:10px;}
+.slider-label{display:flex;justify-content:space-between;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:#9B9586;margin-bottom:2px;}
+.slider-label span{color:#F4F1E8;font-weight:700;letter-spacing:0;text-transform:none;}
+.pulse-row{display:flex;align-items:center;gap:8px;margin:2px 0 10px;flex-wrap:wrap;}
+.pulse-input{font-family:ui-monospace,"SF Mono","Roboto Mono",monospace;font-size:18px;font-weight:700;
+  width:66px;background:transparent;border:1px solid var(--line-dark);border-radius:6px;color:#F4F1E8;padding:5px 7px;}
+.pulse-input:focus{outline:none;border-color:var(--info);}
+.pulse-cat{font-size:11px;font-weight:700;padding:3px 8px;border-radius:5px;letter-spacing:.02em;}
+
+.verdict-card{background:var(--panel-2);border:1px solid var(--line-dark);border-radius:10px;
+  padding:18px 20px;display:flex;flex-direction:column;justify-content:space-between;}
+.verdict-top{display:flex;align-items:center;gap:14px;margin-bottom:8px;flex-wrap:wrap;}
+.verdict-badge{font-family:ui-monospace,monospace;font-weight:800;font-size:13px;letter-spacing:.04em;
+  padding:5px 11px;border-radius:6px;text-transform:uppercase;}
+.verdict-text{font-size:15px;font-weight:600;color:#F4F1E8;line-height:1.35;}
+.verdict-sub{font-size:11.5px;color:#9B9586;margin-top:4px;}
+.gauge{position:relative;height:30px;border-radius:6px;overflow:hidden;display:flex;margin:14px 0 6px;}
+.gauge .seg{flex:1;position:relative;}
+.gauge .marker{position:absolute;top:-5px;width:3px;height:40px;background:#F4F1E8;
+  box-shadow:0 0 6px rgba(244,241,232,.9);transition:left .15s ease;}
+.gauge-labels{display:flex;justify-content:space-between;font-size:9px;color:#9B9586;letter-spacing:.02em;margin-bottom:10px;}
+.chips-label{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#9B9586;margin-bottom:7px;}
+.chip-row{display:flex;gap:6px;flex-wrap:wrap;}
+.chip{font-size:11px;font-weight:700;border-radius:5px;padding:4px 8px;display:flex;flex-direction:column;align-items:center;min-width:56px;}
+.chip small{font-weight:600;font-size:8.8px;letter-spacing:.02em;opacity:.85;text-transform:none;}
+
+.code-S{background:var(--safe-bg);color:var(--safe-ink);border:1.2px solid var(--safe-ink);}
+.code-C{background:var(--caution-bg);color:var(--caution-ink);border:1.2px dashed var(--caution-ink);}
+.code-P{background:var(--postpone-bg);color:var(--postpone-ink);border:1.6px double var(--postpone-ink);}
+.code-D{background:var(--defer-bg);color:var(--defer-ink);border:1.6px solid var(--defer-ink);}
+
+/* ===== Tab nav ===== */
+.tabnav-wrap{position:sticky;top:0;z-index:30;background:var(--paper);border-bottom:1px solid var(--line-light);}
+.tabnav{display:flex;gap:2px;max-width:1180px;margin:0 auto;padding:0 22px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.tabnav button{background:none;border:none;padding:14px 14px;min-height:var(--tap-min);font-size:12.6px;font-weight:600;color:var(--muted);
+  cursor:pointer;white-space:nowrap;border-bottom:2.5px solid transparent;letter-spacing:.01em;}
+.tabnav button.active{color:var(--ink-on-paper);border-bottom-color:var(--info);}
+.tabnav button:hover{color:var(--ink-on-paper);}
+
+.searchbar-wrap{max-width:1180px;margin:0 auto;padding:10px 22px 0;}
+.searchbar{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line-light);
+  border-radius:8px;padding:11px 12px;max-width:420px;min-height:var(--tap-min);}
+.searchbar input{border:none;outline:none;font-size:16px;width:100%;background:transparent;color:var(--ink-on-paper);}
+.searchbar svg{flex-shrink:0;opacity:.55;}
+#search-clear{display:none;flex-shrink:0;border:none;background:var(--paper);color:var(--muted);
+  width:32px;height:32px;border-radius:50%;font-size:17px;line-height:1;cursor:pointer;align-items:center;justify-content:center;}
+#search-clear.show{display:flex;}
+#search-clear:hover{background:var(--line-light);color:var(--ink-on-paper);}
+.search-hint{font-size:10.5px;color:var(--muted);margin-top:4px;}
+.search-hint.active{color:var(--info);font-weight:600;}
+
+/* ===== Content ===== */
+main{max-width:1180px;margin:0 auto;padding:18px 22px 90px;}
+.panel{display:none;}
+.panel.active{display:block;animation:fadein .18s ease;}
+@keyframes fadein{from{opacity:0;transform:translateY(3px);}to{opacity:1;transform:none;}}
+
+.section-head{display:flex;align-items:baseline;gap:10px;margin:26px 0 10px;}
+.section-head:first-child{margin-top:4px;}
+.section-head .bar{width:4px;height:20px;border-radius:2px;background:var(--info);flex-shrink:0;}
+.section-head h2{font-size:16.5px;margin:0;font-weight:800;letter-spacing:-.1px;}
+.section-sub{font-size:12px;color:var(--muted);margin:-4px 0 14px 14px;}
+
+.card{background:var(--card);border:1px solid var(--line-light);border-radius:10px;padding:16px 18px;margin-bottom:14px;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.grid-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;}
+@media (max-width:800px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr;}}
+
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.scroll-hint{font-size:10.5px;color:var(--info);margin:2px 0 8px;display:none;font-weight:600;}
+.scroll-hint.show{display:block;}
+table{width:100%;border-collapse:collapse;font-size:12.6px;}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line-light);vertical-align:top;}
+th{background:#FBFAF6;font-size:11.3px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);font-weight:700;}
+tr:hover td{background:#FBFAF6;}
+.ctr{text-align:center;}
+.note{font-size:11.5px;color:var(--muted);font-style:italic;margin:6px 0 0;}
+
+.callout{border-radius:9px;padding:11px 14px;border:1px solid; margin-bottom:10px;}
+.callout .lbl{font-weight:800;font-size:12.5px;display:block;margin-bottom:3px;}
+.callout p{margin:0;font-size:12.6px;line-height:1.45;}
+.callout.safe{background:var(--safe-bg);border-color:var(--safe-ink);} .callout.safe .lbl{color:var(--safe-ink);}
+.callout.caution{background:var(--caution-bg);border-color:var(--caution-ink);} .callout.caution .lbl{color:var(--caution-ink);}
+.callout.postpone{background:var(--postpone-bg);border-color:var(--postpone-ink);} .callout.postpone .lbl{color:var(--postpone-ink);}
+.callout.defer{background:var(--defer-bg);border-color:var(--defer-ink);} .callout.defer .lbl{color:var(--defer-ink);}
+.callout.info{background:var(--info-bg);border-color:var(--info);} .callout.info .lbl{color:var(--info);}
+.callout.purple{background:var(--purple-bg);border-color:var(--purple);} .callout.purple .lbl{color:var(--purple);}
+
+.legend-row{display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:11.5px;color:var(--muted);margin-bottom:10px;}
+
+ul.plain{margin:4px 0;padding-left:18px;font-size:12.6px;line-height:1.55;}
+ul.cols2{column-count:2;column-gap:22px;}
+ul.checklist{list-style:none;margin:4px 0;padding:0;column-count:2;column-gap:22px;font-size:12.6px;}
+ul.checklist li{margin-bottom:6px;}
+ul.checklist li:before{content:"\2610";margin-right:8px;}
+
+/* Lab tools */
+.tool-card{background:var(--card);border:1px solid var(--line-light);border-radius:10px;padding:16px 18px;margin-bottom:14px;}
+.tool-row{display:flex;align-items:center;gap:10px;margin:8px 0;flex-wrap:wrap;}
+.tool-row input[type=number]{font-family:ui-monospace,monospace;font-size:20px;font-weight:700;width:90px;
+  padding:6px 8px;border:1px solid var(--line-light);border-radius:6px;background:#FBFAF6;}
+.tool-arrow{font-size:18px;color:var(--muted);}
+.tool-result{font-family:ui-monospace,monospace;font-size:20px;font-weight:700;color:var(--info);}
+.tool-result.flag-pos{color:var(--defer-ink);}
+.tool-label{font-size:11.5px;color:var(--muted);font-weight:600;min-width:78px;}
+
+/* Flow helper */
+.flow-card{background:var(--card);border:1px solid var(--line-light);border-radius:10px;padding:18px;}
+.flow-step{font-size:14px;line-height:1.5;margin-bottom:14px;font-weight:600;}
+.flow-actions{display:flex;gap:10px;flex-wrap:wrap;}
+.flow-btn{font-size:13px;font-weight:700;padding:11px 18px;border-radius:7px;border:1.4px solid var(--info);
+  background:var(--info-bg);color:var(--info);cursor:pointer;min-height:var(--tap-min);}
+.flow-btn.no{border-color:var(--defer-ink);background:var(--defer-bg);color:var(--defer-ink);}
+.flow-btn.restart{border-color:var(--line-light);background:#FBFAF6;color:var(--muted);}
+.flow-end{font-size:13.5px;font-weight:700;border-radius:8px;padding:10px 14px;margin-top:4px;}
+.flow-end.safe{background:var(--safe-bg);color:var(--safe-ink);}
+.flow-end.warn{background:var(--postpone-bg);color:var(--postpone-ink);}
+.flow-end.danger{background:var(--defer-bg);color:var(--defer-ink);}
+.flow-trail{font-size:11px;color:var(--muted);margin-bottom:10px;}
+
+/* Floating red-flag button + modal */
+.rf-fab{position:fixed;bottom:20px;right:20px;background:var(--defer);color:#fff;border:none;border-radius:30px;
+  padding:13px 18px;min-height:var(--tap-min);font-weight:800;font-size:13px;box-shadow:0 6px 18px rgba(201,59,75,.45);cursor:pointer;z-index:50;
+  display:flex;align-items:center;gap:8px;}
+.rf-fab:hover{filter:brightness(1.08);}
+.modal-overlay{position:fixed;inset:0;background:rgba(15,18,22,.55);display:none;align-items:center;justify-content:center;z-index:60;padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--card);border-radius:12px;max-width:640px;width:100%;padding:22px 24px;max-height:84vh;overflow-y:auto;}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:10px;}
+.modal-head h3{margin:0;color:var(--defer-ink);font-size:17px;}
+.modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted);line-height:1;
+  width:var(--tap-min);height:var(--tap-min);flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:50%;}
+.modal-close:hover{background:var(--paper);}
+.modal ul{column-count:2;column-gap:20px;padding-left:18px;font-weight:700;font-size:13px;}
+.modal .stop-action{margin-top:10px;font-weight:800;color:var(--defer-ink);font-size:13.5px;}
+@media (max-width:480px){ .modal ul{column-count:1;} }
+
+footer.app-footer{max-width:1180px;margin:0 auto;padding:14px 22px 40px;font-size:10.8px;color:var(--muted);line-height:1.6;border-top:1px solid var(--line-light);}
+footer.app-footer b{color:var(--ink-on-paper);}
+
+.hide{display:none !important;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><span class="dot mono">●</span><b>Blood Pressure Instrument</b><span>Flosswork chairside reference</span></div>
+  <div class="meta">ACC/AHA 2017 · ESC/ESH 2023 · ACOG · ADA · Malamed<br>Not a substitute for clinical judgment</div>
+</div>
+
+<!-- ============ HERO INSTRUMENT ============ -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-label">Live BP lookup — every answer below updates as you type</div>
+    <div class="instrument">
+
+      <div class="readout-card">
+        <div class="reading-label">Office reading (mmHg) — type any value or drag either slider</div>
+        <div class="input-row">
+          <input type="number" id="sys-input" class="bp-input mono" value="120" min="0" max="300" step="1" aria-label="Systolic blood pressure">
+          <span class="bp-slash">/</span>
+          <input type="number" id="dia-input" class="bp-input mono" value="80" min="0" max="200" step="1" aria-label="Diastolic blood pressure" style="width:100px;">
+        </div>
+        <div class="input-unit-label" style="margin-bottom:10px;">mmHg</div>
+
+        <div class="slider-block">
+          <div class="slider-label"><span>Systolic</span><span id="sys-slider-val" class="mono">120</span></div>
+          <input type="range" id="sys-slider" class="bp-slider" min="0" max="300" value="120" step="1" aria-label="Systolic slider">
+        </div>
+        <div class="slider-block">
+          <div class="slider-label"><span>Diastolic</span><span id="dia-slider-val" class="mono">80</span></div>
+          <input type="range" id="dia-slider" class="bp-slider" min="0" max="200" value="80" step="1" aria-label="Diastolic slider">
+        </div>
+
+        <div class="pulse-row">
+          <span class="input-unit-label" style="font-size:12.5px;">Pulse</span>
+          <input type="number" id="pulse-input" class="pulse-input mono" value="72" min="0" max="250" step="1" aria-label="Pulse rate">
+          <span class="input-unit-label" style="font-size:12.5px;">bpm</span>
+          <span id="pulse-cat" class="pulse-cat code-S">NORMAL</span>
+        </div>
+
+        <div class="toggle-row">
+          <label><input type="checkbox" id="sym-toggle"> Symptoms (chest pain/dyspnea/severe headache/vision changes)</label>
+          <label><input type="checkbox" id="anx-toggle"> Anxious / first visit (possible white coat)</label>
+          <label><input type="checkbox" id="irreg-toggle"> Pulse irregular (possible AFib)</label>
+        </div>
+      </div>
+
+      <div class="verdict-card">
+        <div>
+          <div class="verdict-top">
+            <span id="verdict-badge" class="verdict-badge">—</span>
+            <span id="verdict-text" class="verdict-text">—</span>
+          </div>
+          <div class="verdict-sub" id="verdict-sub"></div>
+          <div class="gauge" id="gauge">
+            <div class="seg" style="background:var(--caution);"></div>
+            <div class="seg" style="background:var(--safe);"></div>
+            <div class="seg" style="background:var(--safe);"></div>
+            <div class="seg" style="background:var(--caution);"></div>
+            <div class="seg" style="background:var(--postpone);"></div>
+            <div class="seg" style="background:var(--defer);"></div>
+            <div class="marker" id="gauge-marker" style="left:0%;"></div>
+          </div>
+          <div class="gauge-labels"><span>0</span><span>90</span><span>120</span><span>130</span><span>140</span><span>180/120+</span></div>
+        </div>
+        <div>
+          <div class="chips-label">Can I proceed? — by procedure</div>
+          <div class="chip-row" id="chip-row"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ============ TAB NAV + SEARCH ============ -->
+<div class="tabnav-wrap">
+  <div class="tabnav" id="tabnav">
+    <button data-tab="ranges" class="active">Ranges &amp; Diagnosis</button>
+    <button data-tab="proceed">Can I Proceed?</button>
+    <button data-tab="symptoms">Symptoms &amp; Emergency</button>
+    <button data-tab="flow">Flowcharts</button>
+    <button data-tab="meds">Medications</button>
+    <button data-tab="dental">Dental Practice</button>
+    <button data-tab="lab">Lab Tools</button>
+    <button data-tab="special">Special &amp; Red Flags</button>
+  </div>
+</div>
+<div class="searchbar-wrap">
+  <div class="searchbar">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+    <input type="text" id="search-input" placeholder="Search across the whole guide (e.g. beta-blocker, orthostatic, implant)…">
+    <button id="search-clear" aria-label="Clear search" title="Clear search">&times;</button>
+  </div>
+  <div class="search-hint">Filters table rows and checklists — stays applied as you switch tabs.</div>
+</div>
+
+<main>
+
+<!-- ============ TAB 1: RANGES & DIAGNOSIS ============ -->
+<section class="panel active" id="panel-ranges">
+  <div class="section-head"><span class="bar"></span><h2>Office Blood Pressure Categories — ACC/AHA 2017</h2></div>
+  <div class="card table-wrap">
+    <table>
+      <tr><th>Category</th><th>Systolic</th><th></th><th>Diastolic</th></tr>
+      <tr><td><b>Normal</b></td><td>&lt;120</td><td class="ctr">and</td><td>&lt;80</td></tr>
+      <tr><td><b>Elevated</b></td><td>120–129</td><td class="ctr">and</td><td>&lt;80</td></tr>
+      <tr><td><b>Stage 1 hypertension</b></td><td>130–139</td><td class="ctr">or</td><td>80–89</td></tr>
+      <tr><td><b>Stage 2 hypertension</b></td><td>≥140</td><td class="ctr">or</td><td>≥90</td></tr>
+      <tr><td><b>Hypertensive crisis</b></td><td>&gt;180</td><td class="ctr">and/or</td><td>&gt;120</td></tr>
+    </table>
+  </div>
+  <p class="note">When systolic and diastolic fall into different categories, the higher category governs. Diagnosis of hypertension (outside a crisis) is based on an <b>average of ≥2 readings on ≥2 separate occasions</b>, not a single chairside value.</p>
+
+  <div class="grid-2">
+    <div>
+      <div class="section-head"><span class="bar"></span><h2>ESC/ESH 2023 — Office BP Grading</h2></div>
+      <div class="card table-wrap">
+        <table>
+          <tr><th>Category</th><th>Systolic</th><th>Diastolic</th></tr>
+          <tr><td>Optimal</td><td>&lt;120</td><td>&lt;80</td></tr>
+          <tr><td>Normal</td><td>120–129</td><td>80–84</td></tr>
+          <tr><td>High-normal</td><td>130–139</td><td>85–89</td></tr>
+          <tr><td>Grade 1 hypertension</td><td>140–159</td><td>90–99</td></tr>
+          <tr><td>Grade 2 hypertension</td><td>160–179</td><td>100–109</td></tr>
+          <tr><td>Grade 3 hypertension</td><td>≥180</td><td>≥110</td></tr>
+          <tr><td>Isolated systolic HTN</td><td>≥140</td><td>&lt;90</td></tr>
+        </table>
+      </div>
+      <p class="note">ESC/ESH does not use a separate "elevated" tier and sets the hypertension threshold at 140/90 rather than 130/80 — the two guidelines classify the same 130–139/80–89 reading differently, which is why this instrument shows both.</p>
+    </div>
+    <div>
+      <div class="section-head"><span class="bar"></span><h2>Out-of-Office Thresholds</h2></div>
+      <div class="card table-wrap">
+        <table>
+          <tr><th>Method</th><th>Hypertension if ≥</th></tr>
+          <tr><td>Home BP monitoring (HBPM) average</td><td>130/80</td></tr>
+          <tr><td>Daytime ambulatory (ABPM) average</td><td>130/80</td></tr>
+          <tr><td>24-hour ambulatory (ABPM) average</td><td>125/75</td></tr>
+          <tr><td>Nighttime ambulatory (ABPM) average</td><td>110/65</td></tr>
+        </table>
+      </div>
+      <p class="note"><b>White-coat hypertension:</b> office ≥130/80 but out-of-office normal. <b>Masked hypertension:</b> office normal but out-of-office elevated — both carry real cardiovascular risk and are not "false positives" to dismiss.</p>
+    </div>
+  </div>
+
+  <div class="section-head"><span class="bar"></span><h2>Hypertensive Disorders of Pregnancy</h2></div>
+  <div class="card table-wrap">
+    <table>
+      <tr><th>Category</th><th>Definition</th></tr>
+      <tr><td><b>Chronic hypertension</b></td><td>≥140/90, predates pregnancy or diagnosed before 20 weeks</td></tr>
+      <tr><td><b>Gestational hypertension</b></td><td>≥140/90 new after 20 weeks, without proteinuria/organ dysfunction</td></tr>
+      <tr><td><b>Preeclampsia</b></td><td>≥140/90 after 20 weeks + proteinuria or evidence of maternal organ dysfunction</td></tr>
+      <tr><td><b>Preeclampsia with severe features</b></td><td>≥160/110, or lower BP plus severe symptoms (headache, visual changes, epigastric pain, thrombocytopenia)</td></tr>
+    </table>
+  </div>
+  <p class="note">A pregnant patient with a new BP ≥140/90, or any BP ≥160/110, needs same-day obstetric evaluation — treat this as more urgent than the general adult crisis threshold. Pediatric BP is assessed against age/sex/height-specific percentile charts, not fixed adult cut-offs.</p>
+</section>
+
+<!-- ============ TAB 2: CAN I PROCEED ============ -->
+<section class="panel" id="panel-proceed">
+  <div class="section-head"><span class="bar"></span><h2>"Can I Proceed?" — Clinical Decision Table</h2></div>
+  <p class="section-sub">The instrument above computes this row live for any BP reading — this table is the full reference.</p>
+  <div class="legend-row">
+    <b>Key:</b>
+    <span class="chip code-S" style="display:inline-flex;">S<small>Safe</small></span>
+    <span class="chip code-C" style="display:inline-flex;">C<small>Caution</small></span>
+    <span class="chip code-P" style="display:inline-flex;">P<small>Postpone</small></span>
+    <span class="chip code-D" style="display:inline-flex;">D<small>Defer</small></span>
+    <span>— color + letter + border style, readable in black &amp; white</span>
+  </div>
+  <div class="card table-wrap">
+    <table>
+      <tr><th>Blood Pressure</th><th>Exam</th><th>Scaling</th><th>Restoration</th><th>RCT</th><th>Extraction</th><th>Implant</th><th>Perio Surgery</th><th>Emergency Tx</th><th>Recommendation</th></tr>
+      <tr><td><b>&lt;90/60 mmHg</b><br>Hypotension</td><td><span class="chip code-S">S</span></td><td><span class="chip code-S">S</span></td><td><span class="chip code-S">S</span></td><td><span class="chip code-C">C</span></td><td><span class="chip code-C">C</span></td><td><span class="chip code-C">C</span></td><td><span class="chip code-C">C</span></td><td><span class="chip code-S">S</span></td><td>Recline chair gradually; syncope precautions; treat routine care as usual once stable</td></tr>
+      <tr><td><b>&lt;120/&lt;80</b><br>Normal</td><td><span class="chip code-S">S</span></td><td><span class="chip code-S">S</span></td><td><span class="chip code-S">S</span></td><td><span class="chip code-S">S</span></td><td><span class="chip code-S">S</span></td><td><span class="chip code-S">S</span></td><td><span class="chip code-S">S</span></td><td><span class="chip code-S">S</span></td><td>Safe to proceed with all planned treatment</td></tr>
+      <tr><td><b>120–129/&lt;80</b><br>Elevated</td><td><span class="chip code-S">S</span></td><td><span class="chip code-S">S</span></td><td><span class="chip code-S">S</span></td><td><span class="chip code-S">S</span></td><td><span class="chip code-S">S</span></td><td><span class="chip code-S">S</span></td><td><span class="chip code-S">S</span></td><td><span class="chip code-S">S</span></td><td>Proceed; counsel on lifestyle, recommend physician follow-up</td></tr>
+      <tr><td><b>130–139/80–89</b><br>Stage 1</td><td><span class="chip code-S">S</span></td><td><span class="chip code-S">S</span></td><td><span class="chip code-S">S</span></td><td><span class="chip code-S">S</span></td><td><span class="chip code-S">S</span></td><td><span class="chip code-C">C</span></td><td><span class="chip code-C">C</span></td><td><span class="chip code-S">S</span></td><td>Proceed with routine care; recommend medical follow-up</td></tr>
+      <tr><td><b>140–179/90–109</b><br>Stage 2</td><td><span class="chip code-S">S</span></td><td><span class="chip code-S">S</span></td><td><span class="chip code-C">C</span></td><td><span class="chip code-C">C</span></td><td><span class="chip code-C">C</span></td><td><span class="chip code-P">P</span></td><td><span class="chip code-P">P</span></td><td><span class="chip code-C">C</span></td><td>Allow 5-min rest and recheck; proceed with caution if it settles; consider postponing elective surgical/implant work if it stays elevated</td></tr>
+      <tr><td><b>&gt;180 and/or &gt;120</b><br>Hypertensive urgency (asymptomatic)</td><td><span class="chip code-C">C</span></td><td><span class="chip code-P">P</span></td><td><span class="chip code-P">P</span></td><td><span class="chip code-D">D</span></td><td><span class="chip code-D">D</span></td><td><span class="chip code-D">D</span></td><td><span class="chip code-D">D</span></td><td><span class="chip code-P">P*</span></td><td>Defer elective/invasive care; recheck after rest; same-day medical referral</td></tr>
+      <tr><td><b>≥180 and/or ≥120 + symptoms</b><br>Hypertensive emergency</td><td><span class="chip code-D">D</span></td><td><span class="chip code-D">D</span></td><td><span class="chip code-D">D</span></td><td><span class="chip code-D">D</span></td><td><span class="chip code-D">D</span></td><td><span class="chip code-D">D</span></td><td><span class="chip code-D">D</span></td><td><span class="chip code-D">D</span></td><td>STOP — call emergency services immediately</td></tr>
+    </table>
+  </div>
+  <p class="note">*Genuine dental emergencies (uncontrolled bleeding, airway compromise, spreading facial infection) are never simply withheld even at high BP — stabilize the patient and involve emergency services/the treating physician concurrently, with extra monitoring and minimal vasoconstrictor.</p>
+
+  <div class="section-head"><span class="bar"></span><h2>Dental Procedure Risk Matrix</h2></div>
+  <div class="card table-wrap">
+    <table>
+      <tr><th>Procedure</th><th>Normal–Elevated (&lt;130/80)</th><th>Stage 1 (130–139/80–89)</th><th>Stage 2 (140–179/90–109)</th><th>Crisis (≥180/≥120)</th><th>Recommendation</th></tr>
+      <tr><td>Cleaning / prophylaxis</td><td><span class="chip code-S">S</span></td><td><span class="chip code-S">S</span></td><td><span class="chip code-S">S</span></td><td><span class="chip code-C">C</span></td><td>Low risk at all but crisis-range readings</td></tr>
+      <tr><td>Restoration (filling)</td><td><span class="chip code-S">S</span></td><td><span class="chip code-S">S</span></td><td><span class="chip code-C">C</span></td><td><span class="chip code-D">D</span></td><td>Minimal stimulation; standard LA dose</td></tr>
+      <tr><td>Root canal treatment</td><td><span class="chip code-S">S</span></td><td><span class="chip code-S">S</span></td><td><span class="chip code-C">C</span></td><td><span class="chip code-D">D</span></td><td>Manage acute infection/pain regardless; elective RCT can wait</td></tr>
+      <tr><td>Extraction (simple)</td><td><span class="chip code-S">S</span></td><td><span class="chip code-S">S</span></td><td><span class="chip code-C">C</span></td><td><span class="chip code-D">D</span></td><td>Adequate hemostasis planning at higher stages</td></tr>
+      <tr><td>Implant placement</td><td><span class="chip code-S">S</span></td><td><span class="chip code-C">C</span></td><td><span class="chip code-P">P</span></td><td><span class="chip code-D">D</span></td><td>Elective surgical case — defer until controlled</td></tr>
+      <tr><td>Perio surgery</td><td><span class="chip code-S">S</span></td><td><span class="chip code-C">C</span></td><td><span class="chip code-P">P</span></td><td><span class="chip code-D">D</span></td><td>Same surgical bleeding/healing concerns as implants</td></tr>
+      <tr><td>Sedation (oral/IV)</td><td><span class="chip code-S">S</span></td><td><span class="chip code-S">S</span></td><td><span class="chip code-C">C</span></td><td><span class="chip code-D">D</span></td><td>Sedation and anxiolysis can itself lower BP — monitor</td></tr>
+      <tr><td>General anesthesia</td><td><span class="chip code-S">S</span></td><td><span class="chip code-C">C</span></td><td><span class="chip code-D">D</span></td><td><span class="chip code-D">D</span></td><td>Treat as a surgical/hospital case; anesthesia consult</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ============ TAB 3: SYMPTOMS & EMERGENCY ============ -->
+<section class="panel" id="panel-symptoms">
+  <div class="section-head"><span class="bar"></span><h2>Chairside Symptoms Table</h2></div>
+  <div class="card table-wrap">
+    <table>
+      <tr><th>Category</th><th>Symptoms</th></tr>
+      <tr><td><b>Hypertensive urgency</b></td><td>Often asymptomatic, or mild headache — BP ≥180/≥120 without acute end-organ signs</td></tr>
+      <tr><td><b>Hypertensive emergency</b></td><td><b>Severe headache, chest pain, dyspnea/orthopnea, visual disturbance, confusion/altered consciousness, sudden focal neurological deficit, back pain (possible dissection)</b></td></tr>
+      <tr><td><b>Orthostatic hypotension</b></td><td>Lightheadedness, dizziness, blurred vision, or near-syncope on standing/sitting up</td></tr>
+      <tr><td><b>Vasovagal (syncope) reaction</b></td><td>Pallor, sweating, nausea, yawning, bradycardia, brief loss of consciousness — commonly triggered by anxiety, pain, or the sight of a needle</td></tr>
+      <tr><td><b>Stroke warning signs (FAST)</b></td><td><b>F</b>ace drooping, <b>A</b>rm weakness, <b>S</b>peech difficulty, <b>T</b>ime to call emergency services</td></tr>
+    </table>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <div class="section-head"><span class="bar"></span><h2>Hypertensive Crisis — Action</h2></div>
+      <div class="callout postpone"><span class="lbl">◆ Hypertensive urgency</span><p>BP ≥180 and/or ≥120 without symptoms. Have the patient rest quietly 5 minutes, recheck. If it remains elevated, defer elective/invasive dental care and arrange same-day medical evaluation — no EMS call needed if truly asymptomatic.</p></div>
+      <div class="callout defer"><span class="lbl">✖ Hypertensive emergency</span><p>Same BP range <b>with</b> symptoms of target-organ damage. STOP all treatment, keep the patient seated and calm, call emergency services immediately. Do not give further local anesthetic with vasoconstrictor.</p></div>
+    </div>
+    <div>
+      <div class="section-head"><span class="bar"></span><h2>Low BP / Syncope — Action</h2></div>
+      <div class="callout caution"><span class="lbl">△ Orthostatic hypotension</span><p>Reposition the chair back upright in stages rather than all at once; let the patient sit for 1–2 minutes before standing. Common with diuretics, alpha-blockers, and in the elderly.</p></div>
+      <div class="callout safe"><span class="lbl">✓ Vasovagal reaction</span><p>Recline the chair (legs slightly elevated), loosen tight clothing, ensure airway, apply a cool cloth. Most resolve within 1–2 minutes; recheck vitals before resuming.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TAB 4: FLOWCHARTS (INTERACTIVE) ============ -->
+<section class="panel" id="panel-flow">
+  <div class="section-head"><span class="bar"></span><h2>Interactive Emergency Helpers</h2></div>
+  <p class="section-sub">Click through the same decision tree your team would draw on a whiteboard — answer each question to reach the action.</p>
+  <div class="grid-2">
+    <div>
+      <h3 style="font-size:13.5px;margin:0 0 8px;">Hypertensive Crisis Helper</h3>
+      <div class="flow-card">
+        <div class="flow-trail" id="crisis-trail"></div>
+        <div class="flow-step" id="crisis-step"></div>
+        <div class="flow-actions" id="crisis-actions"></div>
+      </div>
+    </div>
+    <div>
+      <h3 style="font-size:13.5px;margin:0 0 8px;">Syncope / Hypotension Helper</h3>
+      <div class="flow-card">
+        <div class="flow-trail" id="syncope-trail"></div>
+        <div class="flow-step" id="syncope-step"></div>
+        <div class="flow-actions" id="syncope-actions"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TAB 5: MEDICATIONS ============ -->
+<section class="panel" id="panel-meds">
+  <div class="section-head"><span class="bar"></span><h2>Antihypertensive Drug Classes — Dental Considerations</h2></div>
+  <div class="card table-wrap">
+    <table>
+      <tr><th>Class</th><th>Examples</th><th>Key Dental Consideration</th><th>Special Notes</th></tr>
+      <tr><td>Thiazide/thiazide-like diuretics</td><td>Hydrochlorothiazide, Chlorthalidone</td><td>Dry mouth, orthostatic hypotension</td><td>NSAIDs can blunt their effect — avoid prolonged NSAID use</td></tr>
+      <tr><td>Loop diuretics</td><td>Furosemide</td><td>Dry mouth, dehydration risk</td><td>Electrolyte disturbance possible</td></tr>
+      <tr><td>ACE inhibitors</td><td>Lisinopril, Ramipril, Enalapril</td><td>Persistent dry cough; rare but serious angioedema of lips/tongue/airway</td><td>NSAIDs reduce antihypertensive effect and raise renal risk, especially combined with a diuretic</td></tr>
+      <tr><td>ARBs</td><td>Losartan, Telmisartan, Valsartan</td><td>Similar profile to ACE inhibitors, cough is rare</td><td>Same NSAID interaction caution as ACE inhibitors</td></tr>
+      <tr><td>Beta-blockers — non-selective</td><td>Propranolol, Nadolol, Carvedilol</td><td>Caution with epinephrine-containing LA — unopposed alpha effect can raise BP and cause reflex bradycardia</td><td>Limit to ~2 cartridges 1:100,000 epinephrine; aspirate; avoid epinephrine-impregnated retraction cord</td></tr>
+      <tr><td>Beta-blockers — cardioselective</td><td>Atenolol, Metoprolol, Bisoprolol</td><td>Lower interaction risk with epinephrine than non-selective agents, but caution still applies at higher doses</td><td>Can blunt tachycardia that would otherwise signal anaphylaxis or hypoglycemia</td></tr>
+      <tr><td>Calcium channel blockers — dihydropyridine</td><td>Amlodipine, Nifedipine</td><td>Gingival hyperplasia — reinforce oral hygiene, monitor</td><td>Ankle edema is a common non-dental side effect</td></tr>
+      <tr><td>Calcium channel blockers — non-dihydropyridine</td><td>Verapamil, Diltiazem</td><td>Gingival hyperplasia possible; bradycardia risk</td><td>Multiple drug interactions via CYP3A4</td></tr>
+      <tr><td>Alpha-1 blockers</td><td>Prazosin, Doxazosin</td><td>Marked orthostatic hypotension, especially first dose</td><td>Reposition chair slowly</td></tr>
+      <tr><td>Central alpha-2 agonists</td><td>Clonidine, Methyldopa</td><td>Dry mouth, sedation</td><td>Abrupt discontinuation risks rebound hypertension — never a dental team decision</td></tr>
+      <tr><td>Direct vasodilators</td><td>Hydralazine</td><td>Reflex tachycardia, headache</td><td>Usually combined with a beta-blocker to blunt reflex tachycardia</td></tr>
+    </table>
+  </div>
+
+  <div class="grid-2">
+    <div class="callout defer">
+      <span class="lbl">⚠ Local Anesthetic &amp; Vasoconstrictor Caution</span>
+      <p><b>Well-controlled hypertension:</b> standard epinephrine-containing cartridges (1:100,000 or 1:200,000) are generally safe.<br>
+      <b>Uncontrolled/severe hypertension (≥180/110):</b> avoid elective use of vasoconstrictor-containing LA until BP is controlled.<br>
+      <b>Non-selective beta-blockers:</b> limit dose, aspirate before injecting, avoid epinephrine-containing retraction cord.<br>
+      <b>Always:</b> use the minimum effective dose and aspirate before every injection.</p>
+    </div>
+    <div>
+      <div class="callout info"><span class="lbl">NSAID Interaction Warning</span><p>NSAIDs can raise blood pressure and blunt the effect of diuretics, ACE inhibitors, ARBs, and beta-blockers. Avoid prolonged NSAID courses in poorly controlled hypertensives — acetaminophen is a reasonable alternative for dental pain when appropriate.</p></div>
+      <div class="callout caution"><span class="lbl">Never Forget</span>
+        <ul class="plain" style="margin:4px 0 0;">
+          <li>Never advise stopping antihypertensive medication without physician guidance</li>
+          <li>Never treat electively at BP ≥180/110</li>
+          <li>Treat the patient, not just the number — recheck before deciding</li>
+          <li>Recheck BP after any hypotensive episode before resuming</li>
+          <li>If in doubt, postpone elective treatment</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TAB 6: DENTAL PRACTICE ============ -->
+<section class="panel" id="panel-dental">
+  <div class="section-head"><span class="bar"></span><h2>Dental Practice Considerations</h2></div>
+  <div class="card table-wrap">
+    <table>
+      <tr><th>Situation</th><th>Guidance</th></tr>
+      <tr><td><b>Appointment timing</b></td><td>Morning appointments are generally less stressful and reduce cumulative anxiety-driven BP elevation over the day.</td></tr>
+      <tr><td><b>Baseline BP</b></td><td>Record BP at the first visit for every adult patient and at recall visits for known hypertensives — untreated hypertension is often asymptomatic and dental visits can be an early detection point.</td></tr>
+      <tr><td><b>Before sedation/GA or surgical procedures</b></td><td>Check BP immediately before the procedure regardless of history.</td></tr>
+      <tr><td><b>Stress reduction protocol</b></td><td>Short waiting times, clear communication, adequate anesthesia before starting, consider nitrous oxide/oxygen for anxious patients, and effective post-op pain control.</td></tr>
+      <tr><td><b>Chair repositioning</b></td><td>Raise/lower the chair slowly and in stages, particularly for elderly patients or those on diuretics/alpha-blockers, to prevent orthostatic hypotension.</td></tr>
+      <tr><td><b>Recheck protocol</b></td><td>A single elevated chairside reading is not a diagnosis — let the patient rest quietly 5 minutes and recheck before deciding to defer treatment.</td></tr>
+    </table>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <div class="section-head"><span class="bar"></span><h2>When Should BP Be Checked?</h2></div>
+      <div class="callout info">
+        <ul class="plain cols2" style="margin:0;">
+          <li>First visit, any patient</li><li>Known hypertension</li>
+          <li>Before sedation/GA</li><li>Before surgical procedures</li>
+          <li>Before LA with vasoconstrictor in cardiac patients</li><li>Symptoms of dizziness/headache</li>
+          <li>Pregnant patients, every visit</li><li>Recurrent recall visits</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="section-head"><span class="bar"></span><h2>Emergency Kit — BP-Related</h2></div>
+      <div class="callout safe">
+        <ul class="checklist" style="margin:0;column-count:2;">
+          <li>Calibrated sphygmomanometer</li><li>Correct-size cuffs</li>
+          <li>Stethoscope</li><li>Pulse oximeter</li>
+          <li>Oxygen</li><li>Aspirin (chest pain protocol)</li>
+          <li>Glucometer</li><li>Emergency drug kit</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TAB 7: LAB TOOLS ============ -->
+<section class="panel" id="panel-lab">
+  <div class="section-head"><span class="bar"></span><h2>Mean Arterial Pressure &amp; Pulse Pressure</h2></div>
+  <div class="tool-card">
+    <div class="chips-label" style="color:var(--muted);">Enter a reading to compute both</div>
+    <div class="tool-row">
+      <input type="number" id="map-sys" step="1" value="120"><span>/</span>
+      <input type="number" id="map-dia" step="1" value="80"><span>mmHg</span>
+      <span class="tool-arrow">→</span>
+      <span class="tool-label">MAP</span><span class="tool-result" id="map-result">93 mmHg</span>
+      <span class="tool-label">Pulse pressure</span><span class="tool-result" id="pp-result">40 mmHg</span>
+    </div>
+    <p class="note">MAP = DBP + ⅓ (SBP − DBP); normal MAP is roughly 70–100 mmHg. Pulse pressure &gt;60 mmHg in an older adult is associated with arterial stiffness and higher cardiovascular risk.</p>
+  </div>
+
+  <div class="section-head"><span class="bar"></span><h2>Orthostatic Hypotension Calculator</h2></div>
+  <div class="tool-card">
+    <div class="chips-label" style="color:var(--muted);">Supine/seated reading</div>
+    <div class="tool-row">
+      <input type="number" id="ortho-sup-sys" step="1" value="120"><span>/</span>
+      <input type="number" id="ortho-sup-dia" step="1" value="80"><span>mmHg</span>
+    </div>
+    <div class="chips-label" style="color:var(--muted);">Standing reading (after 1–3 min)</div>
+    <div class="tool-row">
+      <input type="number" id="ortho-std-sys" step="1" value="100"><span>/</span>
+      <input type="number" id="ortho-std-dia" step="1" value="72"><span>mmHg</span>
+      <span class="tool-arrow">→</span>
+      <span class="tool-result" id="ortho-result">Drop: 20 / 8 mmHg</span>
+    </div>
+    <p class="note">Consensus definition of orthostatic hypotension: a fall of ≥20 mmHg systolic or ≥10 mmHg diastolic within 3 minutes of standing.</p>
+  </div>
+
+  <div class="section-head"><span class="bar"></span><h2>Quick Reference — Common Readings</h2></div>
+  <div class="card table-wrap">
+    <table>
+      <tr><th>Reading</th><td>90/60</td><td>110/70</td><td>120/80</td><td>130/85</td><td>140/90</td><td>160/100</td><td>180/110</td><td>200/120</td></tr>
+      <tr><th>Category</th><td>Low-normal</td><td>Normal</td><td>Normal</td><td>Stage 1</td><td>Stage 2</td><td>Stage 2</td><td>Crisis</td><td>Crisis</td></tr>
+    </table>
+  </div>
+
+  <div class="section-head"><span class="bar"></span><h2>Heart Rate / Pulse Reference</h2></div>
+  <div class="card table-wrap">
+    <table>
+      <tr><th>Rate</th><th>Category</th><th>Chairside Note</th></tr>
+      <tr><td>&lt;60 bpm</td><td>Bradycardia</td><td>Common with beta-blockers and in trained athletes; investigate if symptomatic (dizziness, near-syncope)</td></tr>
+      <tr><td>60–100 bpm</td><td>Normal</td><td>Typical resting range for adults</td></tr>
+      <tr><td>&gt;100 bpm</td><td>Tachycardia</td><td>Often anxiety/pain-driven chairside; also an early sign of anaphylaxis or an anesthetic complication — recheck cause before dismissing</td></tr>
+      <tr><td>Irregularly irregular</td><td>Possible atrial fibrillation</td><td>New finding warrants medical referral, especially before surgical/invasive procedures or in anticoagulated patients</td></tr>
+    </table>
+  </div>
+  <p class="note">Non-selective beta-blockers can blunt the tachycardia that would otherwise be an early warning sign of anaphylaxis or hypoglycemia — don't rely on heart rate alone in these patients.</p>
+</section>
+
+<!-- ============ TAB 8: SPECIAL & RED FLAGS ============ -->
+<section class="panel" id="panel-special">
+  <div class="section-head"><span class="bar"></span><h2>Special Situations</h2></div>
+  <div class="grid-4">
+    <div class="callout purple"><span class="lbl">Pregnancy</span><p>New BP ≥140/90 or any ≥160/110 needs same-day obstetric evaluation, not routine follow-up.</p></div>
+    <div class="callout info"><span class="lbl">Elderly</span><p>Higher orthostatic hypotension risk; isolated systolic hypertension is common — reposition chair slowly.</p></div>
+    <div class="callout info"><span class="lbl">Renal disease</span><p>Both a cause and a consequence of hypertension; NSAID use needs extra caution.</p></div>
+    <div class="callout info"><span class="lbl">Obesity / OSA</span><p>Common hypertension comorbidity; may need a larger cuff for an accurate reading and careful positioning.</p></div>
+    <div class="callout info"><span class="lbl">Post-MI / stroke</span><p>Avoid elective dental treatment within the first ~6 months without cardiology/neurology clearance.</p></div>
+    <div class="callout info"><span class="lbl">Pacemaker / ICD</span><p>Common in cardiac patients on antihypertensives — avoid electrocautery near the device; standard LA is safe.</p></div>
+    <div class="callout info"><span class="lbl">Diabetes comorbidity</span><p>Hypertension and diabetes commonly coexist and compound cardiovascular and healing risk together.</p></div>
+    <div class="callout info"><span class="lbl">Anxiety / white coat</span><p>Can transiently raise office BP — recheck after the patient settles before acting on a single high reading.</p></div>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <div class="section-head"><span class="bar"></span><h2>Measurement Precautions</h2></div>
+      <ul class="plain cols2">
+        <li>Correct cuff size for arm circumference</li>
+        <li>Patient seated, back supported, feet flat</li>
+        <li>Arm at heart level</li>
+        <li>No talking during measurement</li>
+        <li>No caffeine/exercise in prior 30 min</li>
+        <li>Let patient rest ≥5 min before reading</li>
+        <li>Recheck before acting on any high reading</li>
+        <li>Use the same arm for serial comparisons</li>
+      </ul>
+      <div class="section-head"><span class="bar"></span><h2>Documentation Checklist</h2></div>
+      <ul class="checklist" style="column-count:3;">
+        <li>Date</li><li>Time</li><li>Reading</li>
+        <li>Arm/position</li><li>Device used</li><li>Symptoms</li>
+        <li>Action taken</li><li>Recheck value</li><li>Disposition</li>
+      </ul>
+    </div>
+    <div>
+      <div class="section-head"><span class="bar"></span><h2>Chairside Checklist</h2></div>
+      <ul class="checklist">
+        <li>Medication taken as usual</li><li>Baseline BP on file</li>
+        <li>Symptoms assessed</li><li>Medical history reviewed</li>
+        <li>Recheck done if elevated</li><li>Treatment appropriate today</li>
+        <li>Vasoconstrictor dose considered</li><li>Positional change plan for high-risk patients</li>
+      </ul>
+      <div class="callout defer">
+        <span class="lbl">⚠ RED FLAGS — Immediate Medical Referral</span>
+        <ul class="plain cols2" style="font-weight:700;margin:4px 0;">
+          <li>BP ≥180/≥120 with symptoms</li><li>Chest pain</li>
+          <li>Severe headache + vision change</li><li>Sudden neuro deficit (FAST)</li>
+          <li>Dyspnea / orthopnea</li><li>Syncope with injury</li>
+          <li>New BP ≥140/90 in pregnancy</li><li>Any BP ≥160/110 in pregnancy</li>
+          <li>New irregular pulse</li><li>Pulse &lt;50 or &gt;130 bpm with symptoms</li>
+        </ul>
+        <p style="font-weight:800;margin:6px 0 0;">STOP treatment → stabilize → call emergency services / refer immediately.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="app-footer">
+  <b>Abbreviations:</b> ACC = American College of Cardiology · AHA = American Heart Association · ESC/ESH = European Society of Cardiology/European Society of Hypertension · ACOG = American College of Obstetricians and Gynecologists · SBP/DBP = systolic/diastolic blood pressure · MAP = mean arterial pressure · HBPM = home blood pressure monitoring · ABPM = ambulatory blood pressure monitoring · LA = local anesthetic · MI = myocardial infarction · OSA = obstructive sleep apnea · ICD = implantable cardioverter-defibrillator · FAST = Face-Arm-Speech-Time (stroke screen).<br><br>
+  <b>Disclaimer:</b> This tool supports rapid chairside reference only and does not replace clinical judgment, individualized patient assessment, or current full clinical guidelines. Verify against your institution's protocol and the patient's treating physician where relevant.<br><br>
+  <b>References:</b> Whelton PK, Carey RM, et al. 2017 ACC/AHA/AAPA/ABC/ACPM/AGS/APhA/ASH/ASPC/NMA/PCNA Guideline for High Blood Pressure in Adults, <i>Hypertension</i> 2018;71:e13–e115. Mancia G, et al. 2023 ESH Guidelines for the Management of Arterial Hypertension, <i>J Hypertens</i> 2023. American Dental Association, Oral Health Topics: Blood Pressure/Hypertension. Little JW, Falace DA, et al. <i>Dental Management of the Medically Compromised Patient</i>, 9th ed. Southerland JH, et al. Dental management of patients with hypertension, <i>Dent Clin North Am</i>. ACOG Practice Bulletin 222: Gestational Hypertension and Preeclampsia, <i>Obstet Gynecol</i> 2020. Freeman R, et al. Consensus statement on the definition of orthostatic hypotension, <i>Clin Auton Res</i> 2011. Malamed SF. <i>Handbook of Local Anesthesia</i>, 7th ed.
+</footer>
+
+<button class="rf-fab" id="rf-open" aria-haspopup="dialog">⚠ Red Flags</button>
+<div class="modal-overlay" id="rf-modal">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-head"><h3>⚠ Red Flags — Immediate Medical Referral</h3><button class="modal-close" id="rf-close" aria-label="Close">×</button></div>
+    <ul>
+      <li>BP ≥180/≥120 with symptoms</li><li>Chest pain</li>
+      <li>Severe headache with vision change</li><li>Sudden focal neurological deficit</li>
+      <li>Dyspnea / orthopnea</li><li>Syncope with injury risk</li>
+      <li>New BP ≥140/90 in pregnancy</li><li>Any BP ≥160/110 in pregnancy</li>
+      <li>Confusion / altered consciousness</li><li>Back pain with crisis-range BP</li>
+      <li>New irregular pulse (possible AFib)</li><li>Pulse &lt;50 or &gt;130 bpm with symptoms</li>
+    </ul>
+    <p class="stop-action">STOP treatment → stabilize patient → call emergency services / refer immediately.</p>
+  </div>
+</div>
+
+<script>
+// ===================== INSTRUMENT =====================
+const sInput = document.getElementById('sys-input');
+const dInput = document.getElementById('dia-input');
+const sSlider = document.getElementById('sys-slider');
+const dSlider = document.getElementById('dia-slider');
+const sSliderVal = document.getElementById('sys-slider-val');
+const dSliderVal = document.getElementById('dia-slider-val');
+const pulseInput = document.getElementById('pulse-input');
+const pulseCat = document.getElementById('pulse-cat');
+const symToggle = document.getElementById('sym-toggle');
+const anxToggle = document.getElementById('anx-toggle');
+const irregToggle = document.getElementById('irreg-toggle');
+
+let currentSys = 120, currentDia = 80;
+
+const ZONE_INFO = {
+  hypotension:{label:'HYPOTENSION', cls:'code-C', text:'Recline chair gradually — orthostatic/syncope precautions'},
+  normal:     {label:'NORMAL', cls:'code-S', text:'Safe to proceed with all planned treatment'},
+  elevated:   {label:'ELEVATED', cls:'code-S', text:'Safe to proceed; counsel on lifestyle, recommend follow-up'},
+  stage1:     {label:'STAGE 1 HYPERTENSION', cls:'code-C', text:'Proceed with routine care; recommend medical follow-up'},
+  stage2:     {label:'STAGE 2 HYPERTENSION', cls:'code-P', text:'Rest 5 min and recheck; caution with surgical/invasive care if it stays elevated'},
+  urgency:    {label:'HYPERTENSIVE URGENCY', cls:'code-D', text:'Defer elective/invasive care; recheck after rest; same-day medical referral'},
+  emergency:  {label:'HYPERTENSIVE EMERGENCY', cls:'code-D', text:'STOP — call emergency services immediately'}
+};
+
+const PROC_TABLE = {
+  hypotension:{Exam:'S',Scaling:'S',Restoration:'S',RCT:'C',Extraction:'C',Implant:'C',Perio:'C',Emergency:'S'},
+  normal:     {Exam:'S',Scaling:'S',Restoration:'S',RCT:'S',Extraction:'S',Implant:'S',Perio:'S',Emergency:'S'},
+  elevated:   {Exam:'S',Scaling:'S',Restoration:'S',RCT:'S',Extraction:'S',Implant:'S',Perio:'S',Emergency:'S'},
+  stage1:     {Exam:'S',Scaling:'S',Restoration:'S',RCT:'S',Extraction:'S',Implant:'C',Perio:'C',Emergency:'S'},
+  stage2:     {Exam:'S',Scaling:'S',Restoration:'C',RCT:'C',Extraction:'C',Implant:'P',Perio:'P',Emergency:'C'},
+  urgency:    {Exam:'C',Scaling:'P',Restoration:'P',RCT:'D',Extraction:'D',Implant:'D',Perio:'D',Emergency:'P'},
+  emergency:  {Exam:'D',Scaling:'D',Restoration:'D',RCT:'D',Extraction:'D',Implant:'D',Perio:'D',Emergency:'D'}
+};
+
+function getZone(sys, dia, sym){
+  if(sys>180 || dia>120) return sym ? 'emergency' : 'urgency';
+  if(sys<90 || dia<60) return 'hypotension';
+  if(sys>=140 || dia>=90) return 'stage2';
+  if(sys>=130 || dia>=80) return 'stage1';
+  if(sys>=120 && dia<80) return 'elevated';
+  return 'normal';
+}
+
+const zoneRanges = [
+  {name:'hypotension', min:0, max:90},
+  {name:'normal', min:90, max:120},
+  {name:'elevated', min:120, max:130},
+  {name:'stage1', min:130, max:140},
+  {name:'stage2', min:140, max:180},
+  {name:'urgency', min:180, max:300},
+  {name:'emergency', min:180, max:300}
+];
+// gauge only has 6 visual segments; urgency & emergency share the last (crisis) segment
+const GAUGE_SEGS = ['hypotension','normal','elevated','stage1','stage2','crisis'];
+
+function updateInstrument(){
+  const sym = symToggle.checked;
+  const zone = getZone(currentSys, currentDia, sym);
+  const info = ZONE_INFO[zone];
+
+  const badge = document.getElementById('verdict-badge');
+  badge.textContent = info.label;
+  badge.className = 'verdict-badge ' + info.cls;
+  document.getElementById('verdict-text').textContent = info.text;
+
+  const sub = document.getElementById('verdict-sub');
+  const notes = [];
+  if(anxToggle.checked && (zone==='stage1' || zone==='stage2')){
+    notes.push('Anxious/first visit noted — consider rechecking after the patient settles (white-coat effect).');
+  }
+  if(zone==='hypotension'){
+    notes.push('If symptomatic (dizziness, near-syncope), treat as an acute event, not just a low number.');
+  }
+  if(irregToggle.checked){
+    notes.push('Irregular pulse noted — assess for possible atrial fibrillation; extra caution if the patient is anticoagulated.');
+  }
+  sub.textContent = notes.join(' ');
+
+  // marker position across the 6 equal-width visual gauge segments
+  const clampedSys = Math.max(0, Math.min(300, currentSys));
+  let segName = zone==='urgency' || zone==='emergency' ? 'crisis' : zone;
+  let zr;
+  if(segName==='crisis'){ zr = {min:180, max:300}; } else {
+    zr = zoneRanges.find(z=>z.name===segName);
+  }
+  let segIdx = GAUGE_SEGS.indexOf(segName);
+  if(segIdx===-1) segIdx = 0;
+  const localFrac = zr && zr.max>zr.min ? Math.max(0, Math.min(1, (clampedSys - zr.min)/(zr.max - zr.min))) : 0;
+  const segWidth = 100/GAUGE_SEGS.length;
+  const pct = (segIdx*segWidth) + (localFrac*segWidth);
+  document.getElementById('gauge-marker').style.left = pct + '%';
+
+  const row = document.getElementById('chip-row');
+  row.innerHTML = '';
+  const codes = PROC_TABLE[zone];
+  Object.keys(codes).forEach(proc=>{
+    const code = codes[proc];
+    const div = document.createElement('div');
+    div.className = 'chip code-'+code;
+    div.innerHTML = code + '<small>'+proc+'</small>';
+    row.appendChild(div);
+  });
+}
+
+// Typed values are honored exactly as entered (0 up to the field's max) — only the
+// slider handle and gauge marker are clamped for display, the number field is never
+// overwritten while the person is typing in it.
+function setSys(v, fromSlider){
+  currentSys = Math.max(0, Math.min(300, Math.round(v)));
+  if(fromSlider){ sInput.value = currentSys; }
+  sSlider.value = Math.max(0, Math.min(300, currentSys));
+  sSliderVal.textContent = currentSys;
+  updateInstrument();
+}
+function setDia(v, fromSlider){
+  currentDia = Math.max(0, Math.min(200, Math.round(v)));
+  if(fromSlider){ dInput.value = currentDia; }
+  dSlider.value = Math.max(0, Math.min(200, currentDia));
+  dSliderVal.textContent = currentDia;
+  updateInstrument();
+}
+
+function pulseCategory(p){
+  if(isNaN(p)) return {label:'—', cls:''};
+  if(p<60) return {label:'BRADYCARDIA', cls:'code-C'};
+  if(p<=100) return {label:'NORMAL', cls:'code-S'};
+  return {label:'TACHYCARDIA', cls:'code-C'};
+}
+function updatePulse(){
+  const p = parseFloat(pulseInput.value);
+  const cat = pulseCategory(p);
+  pulseCat.textContent = cat.label;
+  pulseCat.className = 'pulse-cat ' + cat.cls;
+}
+
+sInput.addEventListener('input', ()=>{ const v=parseFloat(sInput.value); if(!isNaN(v)) setSys(v, false); });
+dInput.addEventListener('input', ()=>{ const v=parseFloat(dInput.value); if(!isNaN(v)) setDia(v, false); });
+sSlider.addEventListener('input', ()=>{ const v=parseFloat(sSlider.value); if(!isNaN(v)) setSys(v, true); });
+dSlider.addEventListener('input', ()=>{ const v=parseFloat(dSlider.value); if(!isNaN(v)) setDia(v, true); });
+pulseInput.addEventListener('input', updatePulse);
+symToggle.addEventListener('change', updateInstrument);
+anxToggle.addEventListener('change', updateInstrument);
+irregToggle.addEventListener('change', updateInstrument);
+
+setSys(120, true);
+setDia(80, true);
+updatePulse();
+
+// ===================== TABS =====================
+const tabButtons = document.querySelectorAll('#tabnav button');
+const panels = document.querySelectorAll('.panel');
+tabButtons.forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    tabButtons.forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    panels.forEach(p=>p.classList.remove('active'));
+    document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
+    applySearch(searchInput.value);
+  });
+});
+
+// ===================== SEARCH =====================
+const searchInput = document.getElementById('search-input');
+const searchClear = document.getElementById('search-clear');
+const searchHint = document.querySelector('.search-hint');
+
+function applySearch(q){
+  const active = document.querySelector('.panel.active');
+  if(!active) return;
+  const query = q.trim().toLowerCase();
+  searchClear.classList.toggle('show', query.length>0);
+
+  let visibleCount = 0, totalCount = 0;
+  active.querySelectorAll('table tr').forEach(tr=>{
+    if(tr.querySelector('th')){ tr.style.display=''; return; }
+    totalCount++;
+    const match = query==='' || tr.textContent.toLowerCase().includes(query);
+    tr.style.display = match ? '' : 'none';
+    if(match) visibleCount++;
+  });
+  active.querySelectorAll('ul.plain li, ul.checklist li').forEach(li=>{
+    totalCount++;
+    const match = query==='' || li.textContent.toLowerCase().includes(query);
+    li.style.display = match ? '' : 'none';
+    if(match) visibleCount++;
+  });
+
+  if(query===''){
+    searchHint.textContent = "Filters table rows and checklists — stays applied as you switch tabs.";
+    searchHint.classList.remove('active');
+  } else {
+    searchHint.textContent = visibleCount>0
+      ? `Showing ${visibleCount} of ${totalCount} matching rows on this tab for "${q.trim()}" — still active on other tabs.`
+      : `No matches for "${q.trim()}" on this tab — try another tab, it's still searching.`;
+    searchHint.classList.add('active');
+  }
+}
+searchInput.addEventListener('input', ()=>applySearch(searchInput.value));
+searchClear.addEventListener('click', ()=>{
+  searchInput.value='';
+  applySearch('');
+  searchInput.focus();
+});
+
+// ===================== RED FLAG MODAL =====================
+const rfModal = document.getElementById('rf-modal');
+document.getElementById('rf-open').addEventListener('click', ()=>rfModal.classList.add('open'));
+document.getElementById('rf-close').addEventListener('click', ()=>rfModal.classList.remove('open'));
+rfModal.addEventListener('click', (e)=>{ if(e.target===rfModal) rfModal.classList.remove('open'); });
+document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') rfModal.classList.remove('open'); });
+
+// ===================== MAP + PULSE PRESSURE =====================
+const mapSys = document.getElementById('map-sys');
+const mapDia = document.getElementById('map-dia');
+const mapResult = document.getElementById('map-result');
+const ppResult = document.getElementById('pp-result');
+function updateMap(){
+  const s = parseFloat(mapSys.value), d = parseFloat(mapDia.value);
+  if(isNaN(s) || isNaN(d)) return;
+  const map = d + (s-d)/3;
+  mapResult.textContent = Math.round(map) + ' mmHg';
+  ppResult.textContent = Math.round(s-d) + ' mmHg';
+}
+mapSys.addEventListener('input', updateMap);
+mapDia.addEventListener('input', updateMap);
+updateMap();
+
+// ===================== ORTHOSTATIC CALCULATOR =====================
+const oSupSys = document.getElementById('ortho-sup-sys');
+const oSupDia = document.getElementById('ortho-sup-dia');
+const oStdSys = document.getElementById('ortho-std-sys');
+const oStdDia = document.getElementById('ortho-std-dia');
+const oResult = document.getElementById('ortho-result');
+function updateOrtho(){
+  const ss = parseFloat(oSupSys.value), sd = parseFloat(oSupDia.value);
+  const cs = parseFloat(oStdSys.value), cd = parseFloat(oStdDia.value);
+  if([ss,sd,cs,cd].some(isNaN)) return;
+  const dropSys = ss - cs, dropDia = sd - cd;
+  const positive = dropSys>=20 || dropDia>=10;
+  oResult.textContent = `Drop: ${dropSys} / ${dropDia} mmHg` + (positive ? ' — ORTHOSTATIC HYPOTENSION' : ' — within normal limits');
+  oResult.classList.toggle('flag-pos', positive);
+}
+[oSupSys, oSupDia, oStdSys, oStdDia].forEach(el=>el.addEventListener('input', updateOrtho));
+updateOrtho();
+
+// ===================== SCROLL HINTS =====================
+function refreshScrollHints(){
+  document.querySelectorAll('.table-wrap').forEach(tw=>{
+    let hint = tw.nextElementSibling;
+    const isHint = hint && hint.classList && hint.classList.contains('scroll-hint');
+    if(!isHint){
+      hint = document.createElement('div');
+      hint.className = 'scroll-hint';
+      hint.textContent = '\u2194 swipe to see more columns';
+      tw.parentNode.insertBefore(hint, tw.nextSibling);
+    }
+    const scrollable = tw.scrollWidth > tw.clientWidth + 4;
+    hint.classList.toggle('show', scrollable);
+  });
+}
+window.addEventListener('resize', refreshScrollHints);
+tabButtons.forEach(btn=>btn.addEventListener('click', ()=>setTimeout(refreshScrollHints,50)));
+setTimeout(refreshScrollHints, 200);
+
+// ===================== FLOWCHARTS =====================
+const CRISIS_FLOW = {
+  start:  {text:"BP ≥180 systolic and/or ≥120 diastolic — confirm with a repeat reading.", next:'q1', btn:'Confirmed →'},
+  q1:     {text:"Any symptoms of target-organ damage — chest pain, dyspnea, severe headache, vision changes, neuro deficit, back pain?", yes:'emergency', no:'urgency'},
+  urgency:{text:"Hypertensive urgency: rest 5 min and recheck. If it stays elevated, defer elective dental treatment and arrange same-day medical evaluation.", end:'warn'},
+  emergency:{text:"Hypertensive emergency: STOP treatment, call emergency services immediately, keep patient seated and calm, no further vasoconstrictor-containing LA.", end:'danger'}
+};
+const SYNCOPE_FLOW = {
+  start:  {text:"Patient reports dizziness/near-syncope, or a low BP was recorded.", next:'q1', btn:'Assessed →'},
+  q1:     {text:"Is the patient conscious and responsive?", yes:'recline', no:'ems'},
+  recline:{text:"Recline the chair with legs slightly elevated, loosen tight clothing, ensure the airway is clear, check vitals.", next:'q2', btn:'Repositioned →'},
+  q2:     {text:"Improved within 1–2 minutes?", yes:'monitor', no:'ems2'},
+  monitor:{text:"Monitor vitals and recheck BP before resuming; reposition chair upright slowly in stages.", end:'warn'},
+  ems:    {text:"Unresponsive — call emergency services immediately and assess airway/breathing/circulation.", end:'danger'},
+  ems2:   {text:"No improvement — call emergency services immediately.", end:'danger'}
+};
+
+function makeFlowController(flow, trailEl, stepEl, actionsEl){
+  let node = 'start';
+  let trail = [];
+  function render(){
+    const n = flow[node];
+    stepEl.textContent = n.text;
+    trailEl.textContent = trail.length ? trail.join(' → ')+' → …' : '';
+    actionsEl.innerHTML = '';
+    if(n.end){
+      const box = document.createElement('div');
+      box.className = 'flow-end ' + n.end;
+      box.textContent = n.end==='safe' ? '✓ Proceed' : (n.end==='warn' ? '△ Caution / hold' : '✖ Emergency');
+      actionsEl.appendChild(box);
+      const restart = document.createElement('button');
+      restart.className='flow-btn restart'; restart.textContent='Start over';
+      restart.onclick = ()=>{ node='start'; trail=[]; render(); };
+      actionsEl.appendChild(restart);
+    } else if(n.yes && n.no){
+      const yesBtn=document.createElement('button'); yesBtn.className='flow-btn'; yesBtn.textContent='Yes';
+      yesBtn.onclick=()=>{ trail.push(n.text.split('?')[0].slice(0,28)+'…'); node=n.yes; render(); };
+      const noBtn=document.createElement('button'); noBtn.className='flow-btn no'; noBtn.textContent='No';
+      noBtn.onclick=()=>{ trail.push(n.text.split('?')[0].slice(0,28)+'…'); node=n.no; render(); };
+      actionsEl.appendChild(yesBtn); actionsEl.appendChild(noBtn);
+    } else if(n.next){
+      const cont=document.createElement('button'); cont.className='flow-btn'; cont.textContent=n.btn||'Continue →';
+      cont.onclick=()=>{ trail.push(n.text.slice(0,28)+'…'); node=n.next; render(); };
+      actionsEl.appendChild(cont);
+    }
+  }
+  render();
+}
+makeFlowController(CRISIS_FLOW, document.getElementById('crisis-trail'), document.getElementById('crisis-step'), document.getElementById('crisis-actions'));
+makeFlowController(SYNCOPE_FLOW, document.getElementById('syncope-trail'), document.getElementById('syncope-step'), document.getElementById('syncope-actions'));
+</script>
+</body>
+</html>
