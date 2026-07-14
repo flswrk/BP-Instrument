@@ -49,7 +49,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 @media (max-width:620px){
   .topbar{flex-direction:column;align-items:flex-start;gap:4px;}
   .topbar .meta{text-align:left;}
-  .bp-input{font-size:36px !important;width:105px !important;}
+  .bp-input{font-size:36px !important;width:4.6ch !important;}
   .instrument{gap:14px;}
 }
 
@@ -64,7 +64,9 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .reading-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#9B9586;margin-bottom:10px;}
 .input-row{display:flex;align-items:baseline;gap:8px;margin-bottom:6px;}
 .bp-input{font-family:ui-monospace,"SF Mono","Roboto Mono",monospace;font-size:50px;font-weight:700;
-  background:transparent;border:none;color:#F4F1E8;width:130px;letter-spacing:-1px;padding:0;}
+  background:transparent;border:none;color:#F4F1E8;width:4.6ch;letter-spacing:-1px;padding:0;}
+.bp-input::-webkit-outer-spin-button,.bp-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.bp-input{-moz-appearance:textfield;}
 .bp-input:focus{outline:none;}
 .bp-slash{font-size:36px;color:#9B9586;font-weight:300;}
 .input-unit-label{font-size:15px;color:#9B9586;font-weight:600;align-self:center;}
@@ -236,7 +238,7 @@ footer.app-footer b{color:var(--ink-on-paper);}
         <div class="input-row">
           <input type="number" id="sys-input" class="bp-input mono" value="120" min="0" max="300" step="1" aria-label="Systolic blood pressure">
           <span class="bp-slash">/</span>
-          <input type="number" id="dia-input" class="bp-input mono" value="80" min="0" max="200" step="1" aria-label="Diastolic blood pressure" style="width:100px;">
+          <input type="number" id="dia-input" class="bp-input mono" value="80" min="0" max="200" step="1" aria-label="Diastolic blood pressure" style="width:4ch;">
         </div>
         <div class="input-unit-label" style="margin-bottom:10px;">mmHg</div>
 
@@ -732,15 +734,6 @@ function getZone(sys, dia, sym){
   return 'normal';
 }
 
-const zoneRanges = [
-  {name:'hypotension', min:0, max:90},
-  {name:'normal', min:90, max:120},
-  {name:'elevated', min:120, max:130},
-  {name:'stage1', min:130, max:140},
-  {name:'stage2', min:140, max:180},
-  {name:'urgency', min:180, max:300},
-  {name:'emergency', min:180, max:300}
-];
 // gauge only has 6 visual segments; urgency & emergency share the last (crisis) segment
 const GAUGE_SEGS = ['hypotension','normal','elevated','stage1','stage2','crisis'];
 
@@ -767,18 +760,38 @@ function updateInstrument(){
   }
   sub.textContent = notes.join(' ');
 
-  // marker position across the 6 equal-width visual gauge segments
-  const clampedSys = Math.max(0, Math.min(300, currentSys));
-  let segName = zone==='urgency' || zone==='emergency' ? 'crisis' : zone;
-  let zr;
-  if(segName==='crisis'){ zr = {min:180, max:300}; } else {
-    zr = zoneRanges.find(z=>z.name===segName);
-  }
-  let segIdx = GAUGE_SEGS.indexOf(segName);
-  if(segIdx===-1) segIdx = 0;
-  const localFrac = zr && zr.max>zr.min ? Math.max(0, Math.min(1, (clampedSys - zr.min)/(zr.max - zr.min))) : 0;
+  // Marker position: compute where systolic AND diastolic each fall on the same
+  // 6-segment scale, then use whichever is more severe — this mirrors getZone()'s
+  // own "worse of the two" rule, so moving EITHER slider always moves the bar.
   const segWidth = 100/GAUGE_SEGS.length;
-  const pct = (segIdx*segWidth) + (localFrac*segWidth);
+  function segPct(value, ranges){
+    const lo = ranges[0].min, hi = ranges[ranges.length-1].max;
+    const clamped = Math.max(lo, Math.min(hi, value));
+    let idx = ranges.findIndex(r => clamped>=r.min && clamped<=r.max);
+    if(idx===-1) idx = clamped<lo ? 0 : ranges.length-1;
+    const r = ranges[idx];
+    const frac = r.max>r.min ? (clamped-r.min)/(r.max-r.min) : 0;
+    return (idx*segWidth) + (frac*segWidth);
+  }
+  const SYS_GAUGE_RANGES = [
+    {min:0, max:90},    // hypotension
+    {min:90, max:120},  // normal
+    {min:120, max:130}, // elevated
+    {min:130, max:140}, // stage1
+    {min:140, max:180}, // stage2
+    {min:180, max:300}  // crisis
+  ];
+  const DIA_GAUGE_RANGES = [
+    {min:0, max:60},   // hypotension
+    {min:60, max:80},  // normal
+    {min:60, max:80},  // elevated (diastolic has no independent "elevated" band)
+    {min:80, max:90},  // stage1
+    {min:90, max:120}, // stage2
+    {min:120, max:200} // crisis
+  ];
+  const pctFromSys = segPct(currentSys, SYS_GAUGE_RANGES);
+  const pctFromDia = segPct(currentDia, DIA_GAUGE_RANGES);
+  const pct = Math.max(pctFromSys, pctFromDia);
   document.getElementById('gauge-marker').style.left = pct + '%';
 
   const row = document.getElementById('chip-row');
